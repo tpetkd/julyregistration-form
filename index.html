@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>選手報名表</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --blue: #1a56db; --blue-dark: #1341b0; --blue-light: #e8f0fe;
+    --red: #d93025; --gray-100: #f1f3f4; --gray-200: #e8eaed;
+    --gray-400: #9aa0a6; --gray-600: #5f6368; --gray-800: #3c4043;
+    --gray-900: #202124; --white: #ffffff; --radius: 8px;
+  }
+  body { font-family: 'Noto Sans TC', sans-serif; background: var(--gray-100); color: var(--gray-900); min-height: 100vh; padding: 2rem 1rem 4rem; line-height: 1.6; }
+  .page-wrap { max-width: 760px; margin: 0 auto; }
+  .form-header { background: var(--blue); border-radius: var(--radius) var(--radius) 0 0; padding: 2rem 2rem 1.5rem; color: var(--white); border-top: 6px solid #0d3a8e; }
+  .form-header h1 { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+  .form-header p { font-size: 14px; opacity: .85; }
+  .required-note { background: var(--white); border: 1px solid var(--gray-200); border-top: none; padding: .75rem 2rem; font-size: 13px; color: var(--red); }
+  .section { background: var(--white); border: 1px solid var(--gray-200); border-top: none; padding: 1.5rem 2rem; }
+  .section-title { font-size: 15px; font-weight: 700; color: var(--blue); padding-bottom: 10px; margin-bottom: 1.25rem; border-bottom: 2px solid var(--blue-light); display: flex; align-items: center; gap: 8px; }
+  .section-title svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+  .grid-1 { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+  @media (max-width: 600px) { .grid-3, .grid-2 { grid-template-columns: 1fr; } .section { padding: 1.25rem 1rem; } .form-header { padding: 1.5rem 1rem 1.25rem; } }
+  .mt { margin-top: 1rem; }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field label { font-size: 13px; font-weight: 500; color: var(--gray-800); }
+  .field label .req { color: var(--red); margin-left: 3px; }
+  .field input, .field select, .field textarea { border: none; border-bottom: 1px solid var(--gray-400); background: transparent; padding: 8px 2px; font-size: 14px; font-family: 'Noto Sans TC', sans-serif; color: var(--gray-900); outline: none; transition: border-color .2s; width: 100%; }
+  .field input:focus, .field select:focus, .field textarea:focus { border-bottom: 2px solid var(--blue); }
+  .field input.error, .field select.error, .field textarea.error { border-bottom: 2px solid var(--red); }
+  .field textarea { resize: vertical; min-height: 64px; }
+  .field .hint { font-size: 12px; color: var(--gray-400); margin-top: 2px; }
+  .field .err-msg { font-size: 12px; color: var(--red); display: none; }
+  .field.has-error .err-msg { display: block; }
+  .upload-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .75rem; }
+  @media (max-width: 600px) { .upload-grid { grid-template-columns: 1fr; } }
+  .upload-item { display: flex; flex-direction: column; gap: 4px; }
+  .upload-item label { font-size: 13px; font-weight: 500; color: var(--gray-800); }
+  .upload-box { border: 1.5px dashed var(--gray-400); border-radius: var(--radius); padding: .7rem 1rem; font-size: 13px; color: var(--gray-600); display: flex; align-items: center; gap: 8px; cursor: pointer; transition: border-color .2s, background .2s; position: relative; overflow: hidden; }
+  .upload-box:hover { border-color: var(--blue); background: var(--blue-light); }
+  .upload-box.selected { border-color: var(--blue); background: var(--blue-light); }
+  .upload-box.uploading { border-color: #f59e0b; background: #fffbeb; }
+  .upload-box input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .upload-box svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--blue); }
+  .upload-label { font-size: 13px; color: var(--gray-600); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+  .upload-box.selected .upload-label { color: var(--blue); }
+  .upload-size { font-size: 11px; color: var(--gray-400); margin-left: auto; flex-shrink: 0; }
+  .submit-wrap { background: var(--white); border: 1px solid var(--gray-200); border-top: none; border-radius: 0 0 var(--radius) var(--radius); padding: 1.5rem 2rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .btn-submit { background: var(--blue); color: var(--white); border: none; border-radius: 4px; padding: 10px 28px; font-size: 15px; font-family: 'Noto Sans TC', sans-serif; font-weight: 500; cursor: pointer; transition: background .2s, transform .1s; }
+  .btn-submit:hover { background: var(--blue-dark); }
+  .btn-submit:active { transform: scale(.98); }
+  .btn-submit:disabled { background: var(--gray-400); cursor: not-allowed; }
+  .btn-reset { background: none; border: none; color: var(--blue); font-size: 14px; font-family: 'Noto Sans TC', sans-serif; cursor: pointer; padding: 4px 0; }
+  .btn-reset:hover { text-decoration: underline; }
+  .progress-wrap { display: none; width: 100%; margin-top: .5rem; }
+  .progress-wrap.show { display: block; }
+  .progress-bar { height: 4px; background: var(--gray-200); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--blue); border-radius: 2px; transition: width .3s; width: 0%; }
+  .progress-text { font-size: 12px; color: var(--gray-600); margin-top: 4px; }
+  .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: var(--gray-900); color: var(--white); padding: .75rem 1.5rem; border-radius: 4px; font-size: 14px; z-index: 999; opacity: 0; pointer-events: none; transition: opacity .3s; white-space: nowrap; }
+  .toast.show { opacity: 1; pointer-events: auto; }
+  .toast.success { background: #1e7e34; }
+  .toast.fail { background: var(--red); }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+  <div class="form-header">
+    <h1>選手報名表</h1>
+    <p>請確認所有必填欄位均已填寫，並上傳相關證件檔案。</p>
+  </div>
+  <div class="required-note">＊ 為必填欄位</div>
+
+  <form id="regForm" novalidate>
+
+    <!-- 基本個人資料 -->
+    <div class="section">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        基本個人資料
+      </div>
+      <div class="grid-3">
+        <div class="field" id="f-chname"><label>中文姓名<span class="req">＊</span></label><input type="text" name="中文姓名" placeholder="王小明" required><span class="err-msg">請填寫中文姓名</span></div>
+        <div class="field" id="f-lname"><label>英文姓<span class="req">＊</span></label><input type="text" name="英文姓" placeholder="WANG" required><span class="err-msg">請填寫英文姓</span></div>
+        <div class="field" id="f-fname"><label>英文名<span class="req">＊</span></label><input type="text" name="英文名" placeholder="XIAO MING" required><span class="err-msg">請填寫英文名</span></div>
+      </div>
+      <div class="grid-3 mt">
+        <div class="field" id="f-gender"><label>性別<span class="req">＊</span></label><select name="性別" required><option value="">請選擇</option><option>男</option><option>女</option></select><span class="err-msg">請選擇性別</span></div>
+        <div class="field" id="f-dob"><label>出生日期<span class="req">＊</span></label><input type="date" name="出生日期" required><span class="err-msg">請填寫出生日期</span></div>
+        <div class="field" id="f-id"><label>身份證字號<span class="req">＊</span></label><input type="text" name="身份證字號" placeholder="A123456789" required><span class="err-msg">請填寫身份證字號</span></div>
+      </div>
+      <div class="grid-2 mt">
+        <div class="field" id="f-email"><label>Email<span class="req">＊</span></label><input type="email" name="Email" placeholder="example@email.com" required><span class="err-msg">請填寫正確 Email</span></div>
+        <div class="field" id="f-phone"><label>聯絡電話 / LINE<span class="req">＊</span></label><input type="text" name="聯絡電話LINE" placeholder="0912-345-678" required><span class="err-msg">請填寫聯絡電話</span></div>
+      </div>
+      <div class="grid-1 mt">
+        <div class="field" id="f-addr1"><label>戶籍地址<span class="req">＊</span></label><input type="text" name="戶籍地址" placeholder="台北市中正區…" required><span class="err-msg">請填寫戶籍地址</span></div>
+        <div class="field"><label>現居住地址</label><input type="text" name="現居住地址" placeholder="如與戶籍地址相同請填「同上」"></div>
+      </div>
+    </div>
+
+    <!-- 護照資訊 -->
+    <div class="section">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M7 20c0-2.8 2.2-5 5-5s5 2.2 5 5"/></svg>
+        護照資訊
+      </div>
+      <div class="grid-3">
+        <div class="field" id="f-passport"><label>護照號碼<span class="req">＊</span></label><input type="text" name="護照號碼" placeholder="301234567" required><span class="err-msg">請填寫護照號碼</span></div>
+        <div class="field" id="f-pissue"><label>護照發照日<span class="req">＊</span></label><input type="date" name="護照發照日" required><span class="err-msg">請填寫護照發照日</span></div>
+        <div class="field" id="f-pexpiry"><label>護照效期日<span class="req">＊</span></label><input type="date" name="護照效期日" required><span class="err-msg">請填寫護照效期日</span></div>
+      </div>
+    </div>
+
+    <!-- 其他個人資訊 -->
+    <div class="section">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r=".5" fill="currentColor"/></svg>
+        其他個人資訊
+      </div>
+      <div class="grid-3">
+        <div class="field" id="f-indigenous"><label>是否原住民身份<span class="req">＊</span></label><select name="是否原住民身份" required><option value="">請選擇</option><option>否</option><option>是</option></select><span class="err-msg">請選擇</span></div>
+        <div class="field"><label>如有：族名</label><input type="text" name="族名" placeholder="如無請留空"></div>
+        <div class="field"><label>職稱</label><input type="text" name="職稱" placeholder="選手 / 教練 / 防護員…"></div>
+      </div>
+      <div class="grid-2 mt">
+        <div class="field"><label>飲食習慣</label><select name="飲食習慣"><option value="無特殊需求">無特殊需求</option><option>不吃牛</option><option>海鮮過敏</option><option>蛋奶素</option><option>全素</option></select></div>
+        <div class="field"><label>其他注意事項</label><textarea name="其他注意事項" placeholder="請說明任何需要特別注意的事項"></textarea></div>
+      </div>
+    </div>
+
+    <!-- 比賽資訊 -->
+    <div class="section">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 21v-4M7 4H5a2 2 0 00-2 2v3c0 2.8 1.7 5.2 4.2 6.2"/><path d="M17 4h2a2 2 0 012 2v3c0 2.8-1.7 5.2-4.2 6.2"/><path d="M7 4h10v7a5 5 0 01-10 0V4z"/></svg>
+        比賽資訊
+      </div>
+      <div class="grid-2">
+        <div class="field"><label>世盟會員證號</label><input type="text" name="世盟會員證號" placeholder="沒有請填 TPE-000"><span class="hint">沒有請填 TPE-000</span></div>
+        <div class="field" id="f-category"><label>比賽組別<span class="req">＊</span></label>
+          <select name="比賽組別" required>
+            <option value="">請選擇</option>
+            <optgroup label="Cadet（12–14歲）男子組">
+              <option>Cadet 男子 -33 kg</option><option>Cadet 男子 -37 kg</option><option>Cadet 男子 -41 kg</option>
+              <option>Cadet 男子 -45 kg</option><option>Cadet 男子 -49 kg</option><option>Cadet 男子 -53 kg</option>
+              <option>Cadet 男子 -57 kg</option><option>Cadet 男子 -61 kg</option><option>Cadet 男子 -65 kg</option>
+              <option>Cadet 男子 +65 kg</option>
+            </optgroup>
+            <optgroup label="Cadet（12–14歲）女子組">
+              <option>Cadet 女子 -29 kg</option><option>Cadet 女子 -33 kg</option><option>Cadet 女子 -37 kg</option>
+              <option>Cadet 女子 -41 kg</option><option>Cadet 女子 -44 kg</option><option>Cadet 女子 -47 kg</option>
+              <option>Cadet 女子 -51 kg</option><option>Cadet 女子 -55 kg</option><option>Cadet 女子 -59 kg</option>
+              <option>Cadet 女子 +59 kg</option>
+            </optgroup>
+          </select>
+          <span class="err-msg">請選擇比賽組別</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 銀行帳戶 -->
+    <div class="section">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        銀行帳戶資訊
+      </div>
+      <div class="grid-3">
+        <div class="field" id="f-bank"><label>銀行名稱<span class="req">＊</span></label><input type="text" name="銀行名稱" placeholder="台灣銀行" required><span class="err-msg">請填寫銀行名稱</span></div>
+        <div class="field" id="f-account-name"><label>帳戶名稱<span class="req">＊</span></label><input type="text" name="帳戶名稱" placeholder="王小明" required><span class="err-msg">請填寫帳戶名稱</span></div>
+        <div class="field" id="f-account-num"><label>銀行帳號<span class="req">＊</span></label><input type="text" name="銀行帳號" placeholder="000-000000000000" required><span class="err-msg">請填寫銀行帳號</span></div>
+      </div>
+    </div>
+
+    <!-- 上傳檔案 -->
+    <div class="section">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        上傳檔案
+      </div>
+      <div class="upload-grid">
+        <div class="upload-item">
+          <label>護照檔案<span class="req">＊</span></label>
+          <div class="upload-box" id="ub-passport">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span class="upload-label">點擊選擇檔案</span>
+            <span class="upload-size"></span>
+            <input type="file" accept=".pdf,.jpg,.jpeg,.png" data-field="護照檔案" data-required="true">
+          </div>
+        </div>
+        <div class="upload-item">
+          <label>大頭照<span class="req">＊</span></label>
+          <div class="upload-box" id="ub-photo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <span class="upload-label">點擊選擇檔案</span>
+            <span class="upload-size"></span>
+            <input type="file" accept=".jpg,.jpeg,.png" data-field="大頭照" data-required="true">
+          </div>
+        </div>
+        <div class="upload-item">
+          <label>國際段證</label>
+          <div class="upload-box" id="ub-intl-rank">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span class="upload-label">點擊選擇檔案</span>
+            <span class="upload-size"></span>
+            <input type="file" accept=".pdf,.jpg,.jpeg,.png" data-field="國際段證">
+          </div>
+        </div>
+        <div class="upload-item">
+          <label>國內教練證</label>
+          <div class="upload-box" id="ub-dom-coach">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span class="upload-label">點擊選擇檔案</span>
+            <span class="upload-size"></span>
+            <input type="file" accept=".pdf,.jpg,.jpeg,.png" data-field="國內教練證">
+          </div>
+        </div>
+        <div class="upload-item">
+          <label>國際教練證</label>
+          <div class="upload-box" id="ub-intl-coach">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span class="upload-label">點擊選擇檔案</span>
+            <span class="upload-size"></span>
+            <input type="file" accept=".pdf,.jpg,.jpeg,.png" data-field="國際教練證">
+          </div>
+        </div>
+        <div class="upload-item">
+          <label>英文版證書（防護員請上傳）</label>
+          <div class="upload-box" id="ub-cert">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span class="upload-label">點擊選擇檔案</span>
+            <span class="upload-size"></span>
+            <input type="file" accept=".pdf,.jpg,.jpeg,.png" data-field="英文版證書">
+          </div>
+        </div>
+        <div class="upload-item">
+          <label>存摺影本<span class="req">＊</span></label>
+          <div class="upload-box" id="ub-bankbook">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span class="upload-label">點擊選擇檔案</span>
+            <span class="upload-size"></span>
+            <input type="file" accept=".pdf,.jpg,.jpeg,.png" data-field="存摺影本" data-required="true">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="submit-wrap">
+      <button type="submit" class="btn-submit" id="submitBtn">送出報名</button>
+      <button type="button" class="btn-reset" onclick="resetForm()">清除表單</button>
+      <div class="progress-wrap" id="progressWrap" style="width:100%">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-text" id="progressText">準備中…</div>
+      </div>
+    </div>
+
+  </form>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── 請將這裡替換成你的 Apps Script Web App 網址 ──
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwb2VnLvTUIX5lvtRQD5xnu5pKuUvqKWP-Oe4EzsCJFJSMRRimNkdBJJHjN1IPqEE2U/exec';
+
+  // 顯示選取的檔案名稱與大小
+  document.querySelectorAll('.upload-box input[type="file"]').forEach(input => {
+    input.addEventListener('change', function () {
+      const box = this.closest('.upload-box');
+      const label = box.querySelector('.upload-label');
+      const sizeEl = box.querySelector('.upload-size');
+      if (this.files && this.files[0]) {
+        const f = this.files[0];
+        label.textContent = f.name;
+        sizeEl.textContent = formatSize(f.size);
+        box.classList.add('selected');
+      } else {
+        label.textContent = '點擊選擇檔案';
+        sizeEl.textContent = '';
+        box.classList.remove('selected');
+      }
+    });
+  });
+
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+  }
+
+  // File → base64
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // 驗證必填欄位
+  function validateForm() {
+    const fields = [
+      { id: 'f-chname', name: '中文姓名' }, { id: 'f-lname', name: '英文姓' },
+      { id: 'f-fname', name: '英文名' }, { id: 'f-gender', name: '性別' },
+      { id: 'f-dob', name: '出生日期' }, { id: 'f-id', name: '身份證字號' },
+      { id: 'f-email', name: 'Email' }, { id: 'f-phone', name: '聯絡電話LINE' },
+      { id: 'f-addr1', name: '戶籍地址' }, { id: 'f-passport', name: '護照號碼' },
+      { id: 'f-pissue', name: '護照發照日' }, { id: 'f-pexpiry', name: '護照效期日' },
+      { id: 'f-indigenous', name: '是否原住民身份' }, { id: 'f-category', name: '比賽組別' },
+      { id: 'f-bank', name: '銀行名稱' }, { id: 'f-account-name', name: '帳戶名稱' },
+      { id: 'f-account-num', name: '銀行帳號' },
+    ];
+    let valid = true;
+    fields.forEach(({ id }) => {
+      const wrap = document.getElementById(id);
+      if (!wrap) return;
+      const el = wrap.querySelector('input, select, textarea');
+      const empty = !el.value || el.value.trim() === '';
+      wrap.classList.toggle('has-error', empty);
+      el.classList.toggle('error', empty);
+      if (empty) valid = false;
+    });
+    // 驗證必填檔案
+    document.querySelectorAll('input[type="file"][data-required]').forEach(input => {
+      const box = input.closest('.upload-box');
+      if (!input.files || !input.files[0]) {
+        box.style.borderColor = 'var(--red)';
+        valid = false;
+      } else {
+        box.style.borderColor = '';
+      }
+    });
+    return valid;
+  }
+
+  function setProgress(pct, text) {
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressText').textContent = text;
+  }
+
+  // 送出
+  document.getElementById('regForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    if (!validateForm()) { showToast('請填寫所有必填欄位並上傳必要檔案', 'fail'); return; }
+    if (APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') { showToast('請先設定 Apps Script 網址', 'fail'); return; }
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = '送出中…';
+    document.getElementById('progressWrap').classList.add('show');
+    setProgress(5, '讀取資料中…');
+
+    // 收集文字欄位
+    const data = {};
+    this.querySelectorAll('input:not([type="file"]), select, textarea').forEach(el => {
+      if (el.name) data[el.name] = el.value;
+    });
+
+    // 收集檔案（轉 base64）
+    const fileInputs = this.querySelectorAll('input[type="file"]');
+    const files = {};
+    let done = 0;
+    for (const input of fileInputs) {
+      if (input.files && input.files[0]) {
+        const f = input.files[0];
+        setProgress(10 + Math.round((done / fileInputs.length) * 50), `轉換檔案中：${f.name}`);
+        files[input.dataset.field] = {
+          name: f.name,
+          mimeType: f.type || 'application/octet-stream',
+          data: await fileToBase64(f)
+        };
+      }
+      done++;
+    }
+
+    setProgress(65, '上傳資料中…');
+
+    try {
+      const payload = JSON.stringify({ fields: data, files: files });
+      const res = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: payload
+      });
+      setProgress(90, '處理回應中…');
+      const json = await res.json();
+      if (json.result === 'success') {
+        setProgress(100, '完成！');
+        showToast('✓ 報名成功！已收到您的資料。', 'success');
+        setTimeout(() => {
+          this.reset();
+          resetUploadUI();
+          document.getElementById('progressWrap').classList.remove('show');
+          setProgress(0, '');
+        }, 1500);
+      } else {
+        showToast('送出失敗：' + (json.message || '請稍後再試'), 'fail');
+        setProgress(0, '');
+      }
+    } catch (err) {
+      showToast('連線失敗，請檢查網路後重試。', 'fail');
+      setProgress(0, '');
+    }
+    btn.disabled = false;
+    btn.textContent = '送出報名';
+  });
+
+  function resetUploadUI() {
+    document.querySelectorAll('.upload-box').forEach(box => {
+      box.classList.remove('selected', 'uploading');
+      box.style.borderColor = '';
+      box.querySelector('.upload-label').textContent = '點擊選擇檔案';
+      box.querySelector('.upload-size').textContent = '';
+    });
+  }
+
+  function resetForm() {
+    if (!confirm('確定要清除所有填寫內容？')) return;
+    document.getElementById('regForm').reset();
+    document.querySelectorAll('.has-error').forEach(el => el.classList.remove('has-error'));
+    document.querySelectorAll('.error').forEach(el => el.classList.remove('error'));
+    resetUploadUI();
+  }
+
+  function showToast(msg, type = '') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show ' + type;
+    setTimeout(() => { t.className = 'toast'; }, 4500);
+  }
+</script>
+</body>
+</html>
